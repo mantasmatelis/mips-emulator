@@ -8,6 +8,8 @@ This emulates MIPS with some features not available in the CS241 provided emulat
 2. Complains when you do things that may be a bad idea (e.g. letting your PC go past the loaded program)
 3. Registers are passed in as flags
 4. Warns on use of uninitialized memory or registers
+5. Single executable with no dependencies
+6. Fast to startup - it's written in Go, not Java
 
 ## Features missing
 1. Compatibility can't be guaranteed with the MIPS standard, this is an early project
