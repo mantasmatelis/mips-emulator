@@ -23,7 +23,7 @@ type Machine struct {
 
 func (m *Machine) GetMem(loc uint16) uint32 {
         if !m.memSet[loc] {
-          // output debug info
+		m.DebugDump(fmt.Sprintf("read from memory location %0#8x before writing to it", loc))
         }
         return m.mem[loc]
 }
@@ -35,6 +35,9 @@ func (m *Machine) SetMem(loc uint16, val uint32) {
 }
 
 func (m *Machine) GetReg(register uint8) uint32 {
+	if !m.registersSet[register] {
+		m.DebugDump(fmt.Sprintf("read from register $%2v before writing to it", register))
+	}
         return m.registers[register]
 }
 
@@ -80,7 +83,7 @@ func (m *Machine) DebugDump(msg string) {
 			fmt.Fprintf(os.Stderr, "\n")
 		}
 	}
-	fmt.Fprintf(os.Stderr, "\n pc: %0#8x,  lo: %0#8x,  hi: %0#8x\n", m.pc, m.lo, m.hi)
+	fmt.Fprintf(os.Stderr, "\n pc:     %0#4x,  lo: %0#8x,  hi: %0#8x\n", m.pc, m.lo, m.hi)
 }
 
 func (m *Machine) Run() {
