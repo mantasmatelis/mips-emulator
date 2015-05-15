@@ -30,11 +30,11 @@ func parseSti(inst uint32) (uint8, uint8, uint16) {
 }
 
 func (m *Machine) logStd(inst string, s, t, d uint8, result uint32) {
-        m.logString(fmt.Sprintf("%v $%v (%0#8x -> %0#8x), $%v (%0#8x), $%v (%0#8x)", inst, d, m.registers[d], result, s, m.registers[s], t, m.registers[t]))
+        m.logString(fmt.Sprintf("%v $%v (%0#x -> %0#x), $%v (%0#x), $%v (%0#x)", inst, d, m.registers[d], result, s, m.registers[s], t, m.registers[t]))
 }
 
 func (m *Machine) logSt(inst string, s, t uint8, lo, hi uint32) {
-        m.logString(fmt.Sprintf("%v $%v (%0#8x), $%v (%0#8x). lo: %0#8x, hi: %0#8x", inst, s, m.registers[s], t, m.registers[t], lo, hi))
+        m.logString(fmt.Sprintf("%v $%v (%0#x), $%v (%0#x). lo: %0#x, hi: %0#x", inst, s, m.registers[s], t, m.registers[t], lo, hi))
 }
 
 func (m *Machine) logD(inst string, d uint8, result uint32) {

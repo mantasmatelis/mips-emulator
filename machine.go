@@ -67,7 +67,9 @@ func (m *Machine) LoadProgram(program []byte, registers []uint32, verbose bool, 
 
         for i := 0; i < len(registers); i++ {
                 m.registers[i+1] = registers[i]
+		m.registersSet[i+1] = true
         }
+	m.registersSet[0] = true
 
         m.returnAddress = 65000
 	m.registers[31] = uint32(m.returnAddress)
