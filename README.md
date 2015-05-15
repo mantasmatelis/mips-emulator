@@ -15,11 +15,20 @@ This emulates MIPS with some features not available in the CS241 provided emulat
 Pull requests are welcomed.
 
 ## Usage
-    $ ./mips-emulator -filename="../mips-assembler/a1p3.out" -r1 1 -verbose
-    0x00000000 is add $0, $1, $3
-    0x00000004 is add $1, $3, $4
-    0x00000008 is jr $31
-    program ended cleanly.
-    register 1 has value 0x1
-    register 3 has value 0x1
-    register 4 has value 0x2
+	$ ./mips-emulator -filename="../mips-assembler/a1p3.out" -verbose -r1 5
+	0x00000000: add $3 (0x00000000 -> 0x00000005), $0 (0x00000000), $1 (0x00000005)
+	0x00000004: add $4 (0x00000000 -> 0x0000000a), $1 (0x00000005), $3 (0x00000005)
+	0x00000008: jr $31 (0xfde8)
+	
+	machine dump: program finished cleanly
+	$ 0: 0x00000000, $ 1: 0x00000005, $ 2: 0x00000000, $ 3: 0x00000005, 
+	$ 4: 0x0000000a, $ 5: 0x00000000, $ 6: 0x00000000, $ 7: 0x00000000, 
+	$ 8: 0x00000000, $ 9: 0x00000000, $10: 0x00000000, $11: 0x00000000, 
+	$12: 0x00000000, $13: 0x00000000, $14: 0x00000000, $15: 0x00000000, 
+	$16: 0x00000000, $17: 0x00000000, $18: 0x00000000, $19: 0x00000000, 
+	$20: 0x00000000, $21: 0x00000000, $22: 0x00000000, $23: 0x00000000, 
+	$24: 0x00000000, $25: 0x00000000, $26: 0x00000000, $27: 0x00000000, 
+	$28: 0x00000000, $29: 0x00000000, $30: 0x00000000, $31: 0x0000fde8, 
+
+	 pc: 0x0000fde8,  lo: 0x00000000,  hi: 0x00000000
+

@@ -1,118 +1,134 @@
 package main
 
-import (
-  "fmt"
-)
-
-func decode_register(inst uint32) (uint8, uint8, uint8) {
-  return uint8(inst >> 21 & 0x1F), uint8(inst >> 16 & 0x1F), uint8(inst >> 11 & 0x1F)
+func (m *Machine) add(inst uint32) {
+	s, t, d := parseStd(inst)
+	result := m.GetReg(t) + m.GetReg(s)
+	m.logStd("add", s, t, d, result)
+        m.SetReg(d, result)
 }
 
-func decode_immediate(inst uint32) (uint8, uint8, uint16) {
-  return uint8(inst >> 21 & 0x1F), uint8(inst >> 16 & 0x1F), uint16(inst & 0xFFFF) 
+func (m *Machine) sub(inst uint32) {
+	s, t, d := parseStd(inst)
+	result := m.GetReg(s) - m.GetReg(t)
+	m.logStd("sub", s, t, d, result)
+        m.SetReg(d, result)
 }
 
-func debug_inst(inst uint32, pc uint16, debug string, verbose bool) {
-  if verbose {
-    fmt.Printf("%0#8x: %0#8x which is %v\n", pc - 4, inst, debug)
-  }
+func (m *Machine) mult(inst uint32) {
+	s, t := parseSt(inst)
+        result := uint64(int64(m.GetReg(s)) * int64(m.GetReg(t)))
+	lo, hi := uint32(result), uint32(result >> 32) 
+	m.logSt("mult", s, t, lo, hi) 
+	m.SetLoHi(lo, hi)
 }
 
-func inst_add(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  debug_inst(inst, *pc, fmt.Sprintf("add $%v, $%v, $%v", s, t, d), verbose)
-  registers[d] = registers[t] + registers[s]
+func (m *Machine) multu(inst uint32) {
+	s, t := parseSt(inst)
+        result := uint64(uint64(m.GetReg(s)) * uint64(m.GetReg(t)))
+	lo, hi := uint32(result), uint32(result >> 32)
+	m.logSt("multu", s, t, lo, hi)
+	m.SetLoHi(lo, hi)
 }
 
-func inst_sub(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  _ = s + t + d
-  //TODO: right order?
-  registers[d] = registers[t] - registers[s]
+func (m *Machine) div(inst uint32) {
+	s, t := parseSt(inst)
+	sVal, tVal := int32(m.GetReg(s)), int32(m.GetReg(t))
+	lo, hi := uint32(sVal / tVal), uint32(sVal % tVal)
+	m.logSt("div", s, t, lo, hi)
+	m.SetLoHi(lo, hi)
 }
 
-func inst_mult(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, _ := decode_register(inst)
-  result := int64(registers[s]) * int64(registers[t]) 
-  registers[32] = uint32(result)
-  registers[33] = uint32(result >> 32)
+func (m *Machine) divu(inst uint32) {
+	s, t := parseSt(inst)
+	sVal, tVal := m.GetReg(s), m.GetReg(t)
+	lo, hi := sVal / tVal, sVal % tVal
+	m.logSt("divu", s, t, lo, hi)
+	m.SetLoHi(lo, hi)
 }
 
-func inst_multu(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, _ := decode_register(inst)
-  result := uint64(registers[s]) * uint64(registers[t]) 
-  registers[32] = uint32(result)
-  registers[33] = uint32(result >> 32)
-  
+func (m *Machine) mfhi(inst uint32) {
+	d := parseD(inst)
+	hi := m.GetHi()
+	m.logD("mfhi", d, hi)
+	m.SetReg(d, hi)
 }
 
-func inst_div(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  _ = s + t + d
+func (m *Machine) mflo(inst uint32) {
+	d := parseD(inst)
+	lo := m.GetLo()
+	m.logD("mflo", d, lo)
+	m.SetReg(d, lo)
 }
 
-func inst_divu(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  _ = s + t + d
+func (m *Machine) lis(inst uint32) {
+	d := parseD(inst)
+	result := m.GetMem(m.pc)
+	m.logD("lis", d, result)
+	m.pc += 4
+	m.SetReg(d, result)
 }
 
-func inst_mfhi(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  _, _, d := decode_register(inst)
-  registers[d] = registers[33]
+func (m *Machine) lw(inst uint32) {
+	s, t, i := parseSti(inst)
+	mem := m.GetMem(uint16(m.GetReg(s)) + i)
+	m.logStiWord("lw", s, t, i, mem)
+	m.SetReg(t, mem) 
 }
 
-func inst_mflo(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  _, _, d := decode_register(inst)
-  registers[d] = registers[32]
+func (m *Machine) sw(inst uint32) {
+	s, t, i := parseSti(inst)
+	mem := m.GetReg(t)
+	m.logStiWord("sw", s, t, i, mem)
+	m.SetMem(uint16(m.GetReg(s)) + i, mem) 
 }
 
-func inst_lis(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  _, _, d := decode_register(inst)
-  registers[d] = mem[*pc]
-  *pc += uint16(4)
+func (m *Machine) slt(inst uint32) {
+	s, t, d := parseStd(inst)
+	result := uint32(0)
+	if int32(m.GetReg(s)) < int32(m.GetReg(t)) {
+		result = 1
+	}
+	m.logStd("slt", s, t, d, result)
+	m.SetReg(d, result) 
 }
 
-func inst_lw(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, i := decode_immediate(inst)
-  registers[t] = mem[uint16(s) + i]
+func (m *Machine) sltu(inst uint32) {
+	s, t, d := parseStd(inst)
+	result := uint32(0)
+	if m.GetReg(s) < m.GetReg(t) {
+		result = 1
+	}
+	m.logStd("sltu", s, t, d, result)
+	m.SetReg(d, result) 
 }
 
-func inst_sw(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, i := decode_immediate(inst)
-  mem[uint16(s) + i] = registers[t]
+func (m *Machine) beq(inst uint32) {
+	s, t, i := parseSti(inst)
+	m.logStiBranch("beq", s, t, i)
+	if m.GetReg(s) == m.GetReg(t) {
+		m.pc += i * 4
+	}
 }
 
-func inst_slt(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  _ = s + t + d
+func (m *Machine) bne(inst uint32) {
+	s, t, i := parseSti(inst)
+	m.logStiBranch("bne", s, t, i)
+	if m.GetReg(s) != m.GetReg(t) {
+		m.pc += i * 4
+	}
 }
 
-func inst_sltu(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, d := decode_register(inst)
-  _ = s + t + d
+func (m *Machine) jr(inst uint32) {
+	s := parseS(inst)
+	addr := uint16(m.GetReg(s))
+	m.logS("jr", s, addr)
+	m.pc = addr
 }
 
-func inst_beq(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, i := decode_immediate(inst)
-  if registers[s] == registers[t] {
-    *pc += i * 4
-  }
-}
-
-func inst_bne(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, t, i := decode_immediate(inst)
-  if registers[s] != registers[t] {
-    *pc += i * 4
-  }
-}
-
-func inst_jr(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
- s, _, _ := decode_register(inst)
- *pc = uint16(registers[s])
-}
-
-func inst_jalr(inst uint32, mem *[16384]uint32, registers *[34]uint32, pc *uint16, verbose bool) {
-  s, _, _ := decode_register(inst)
-  registers[31] = uint32(*pc)
-  *pc = uint16(registers[s])
+func (m *Machine) jalr(inst uint32) {
+	s := parseS(inst)
+	addr := uint16(m.GetReg(s))
+	m.logS("jalr", s, addr)
+	m.SetReg(31, uint32(m.pc))
+	m.pc = addr
 }
