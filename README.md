@@ -18,10 +18,18 @@ This emulates MIPS with some features not available in the CS241 provided emulat
 Pull requests are welcomed.
 
 ## Usage
-	$ ./mips-emulator -filename="../mips-assembler/a1p3.out" -verbose -r1 5
-	0x00000000: add $3 (0x00000000 -> 0x00000005), $0 (0x00000000), $1 (0x00000005)
-	0x00000004: add $4 (0x00000000 -> 0x0000000a), $1 (0x00000005), $3 (0x00000005)
-	0x00000008: jr $31 (0xfde8)
+	$ ./mips-emulator -f 0:a2p6.mips -r 1:0x10000 -r 2:3 -m "0x10000:1,2,3" -v
+	0x00000000: sw $30 (0x0), $2 (0x3) + 0xfffc
+	0x00000004: sw $30 (0x0), $3 (0x0) + 0xfff8
+	0x00000008: sw $30 (0x0), $31 (0xfde8) + 0xfff4
+	0x0000000c: lis $2 (0xc)
+	... snip snip snip ...
+	0x00000038: lis $2 (0xc)
+	0x00000040: add $30 (0xfffffff4 -> 0x0), $30 (0xfffffff4), $2 (0xc)
+	0x00000044: lw $30 (0x0), $2 (0xc) + 0xfffc
+	0x00000048: lw $30 (0x0), $3 (0xffff000c) + 0xfff8
+	0x0000004c: lw $30 (0x0), $31 (0x24) + 0xfff4
+	0x00000050: jr $31 (0xfde8)
 	
 	machine dump: program finished cleanly
 	$ 0: 0x00000000, $ 1: 0x00000005, $ 2: 0x00000000, $ 3: 0x00000005, 
