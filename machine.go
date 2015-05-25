@@ -22,16 +22,16 @@ type Machine struct {
 }
 
 func (m *Machine) GetMem(loc uint16) uint32 {
-        if !m.memSet[loc] {
+        if !m.memSet[loc/4] {
 		m.DebugDump(fmt.Sprintf("read from memory location %0#8x before writing to it", loc))
         }
-        return m.mem[loc]
+        return m.mem[loc/4]
 }
 
 
 func (m *Machine) SetMem(loc uint16, val uint32) {
-        m.mem[loc] = val
-        m.memSet[loc] = true
+        m.mem[loc/4] = val
+        m.memSet[loc/4] = true
 }
 
 func (m *Machine) GetReg(register uint8) uint32 {
@@ -63,6 +63,7 @@ func (m *Machine) GetHi() uint32 {
 func (m *Machine) LoadProgram(program []byte, registers []uint32, verbose bool, breakpoints bool) {
         for i := uint(0); int(i) < len(program); i++ {
                 m.mem[i/4] += uint32(program[i]) << (8 * (3 - (i % 4)))
+		m.memSet[i/4] = true
         }
 
         for i := 0; i < len(registers); i++ {
