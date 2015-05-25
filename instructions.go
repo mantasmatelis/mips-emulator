@@ -4,28 +4,28 @@ func (m *Machine) add(inst uint32) {
 	s, t, d := parseStd(inst)
 	result := m.GetReg(t) + m.GetReg(s)
 	m.logStd("add", s, t, d, result)
-        m.SetReg(d, result)
+	m.SetReg(d, result)
 }
 
 func (m *Machine) sub(inst uint32) {
 	s, t, d := parseStd(inst)
 	result := m.GetReg(s) - m.GetReg(t)
 	m.logStd("sub", s, t, d, result)
-        m.SetReg(d, result)
+	m.SetReg(d, result)
 }
 
 func (m *Machine) mult(inst uint32) {
 	s, t := parseSt(inst)
-        result := uint64(int64(m.GetReg(s)) * int64(m.GetReg(t)))
-	lo, hi := uint32(result), uint32(result >> 32) 
-	m.logSt("mult", s, t, lo, hi) 
+	result := uint64(int64(m.GetReg(s)) * int64(m.GetReg(t)))
+	lo, hi := uint32(result), uint32(result>>32)
+	m.logSt("mult", s, t, lo, hi)
 	m.SetLoHi(lo, hi)
 }
 
 func (m *Machine) multu(inst uint32) {
 	s, t := parseSt(inst)
-        result := uint64(uint64(m.GetReg(s)) * uint64(m.GetReg(t)))
-	lo, hi := uint32(result), uint32(result >> 32)
+	result := uint64(uint64(m.GetReg(s)) * uint64(m.GetReg(t)))
+	lo, hi := uint32(result), uint32(result>>32)
 	m.logSt("multu", s, t, lo, hi)
 	m.SetLoHi(lo, hi)
 }
@@ -33,7 +33,7 @@ func (m *Machine) multu(inst uint32) {
 func (m *Machine) div(inst uint32) {
 	s, t := parseSt(inst)
 	sVal, tVal := int32(m.GetReg(s)), int32(m.GetReg(t))
-	lo, hi := uint32(sVal / tVal), uint32(sVal % tVal)
+	lo, hi := uint32(sVal/tVal), uint32(sVal%tVal)
 	m.logSt("div", s, t, lo, hi)
 	m.SetLoHi(lo, hi)
 }
@@ -41,7 +41,7 @@ func (m *Machine) div(inst uint32) {
 func (m *Machine) divu(inst uint32) {
 	s, t := parseSt(inst)
 	sVal, tVal := m.GetReg(s), m.GetReg(t)
-	lo, hi := sVal / tVal, sVal % tVal
+	lo, hi := sVal/tVal, sVal%tVal
 	m.logSt("divu", s, t, lo, hi)
 	m.SetLoHi(lo, hi)
 }
@@ -70,16 +70,16 @@ func (m *Machine) lis(inst uint32) {
 
 func (m *Machine) lw(inst uint32) {
 	s, t, i := parseSti(inst)
-	mem := m.GetMem(uint16(m.GetReg(s)) + i)
+	mem := m.GetMem(m.GetReg(s) + uint32(i))
 	m.logStiWord("lw", s, t, i, mem)
-	m.SetReg(t, mem) 
+	m.SetReg(t, mem)
 }
 
 func (m *Machine) sw(inst uint32) {
 	s, t, i := parseSti(inst)
 	mem := m.GetReg(t)
 	m.logStiWord("sw", s, t, i, mem)
-	m.SetMem(uint16(m.GetReg(s)) + i, mem) 
+	m.SetMem(m.GetReg(s)+uint32(i), mem)
 }
 
 func (m *Machine) slt(inst uint32) {
@@ -89,7 +89,7 @@ func (m *Machine) slt(inst uint32) {
 		result = 1
 	}
 	m.logStd("slt", s, t, d, result)
-	m.SetReg(d, result) 
+	m.SetReg(d, result)
 }
 
 func (m *Machine) sltu(inst uint32) {
@@ -99,14 +99,14 @@ func (m *Machine) sltu(inst uint32) {
 		result = 1
 	}
 	m.logStd("sltu", s, t, d, result)
-	m.SetReg(d, result) 
+	m.SetReg(d, result)
 }
 
 func (m *Machine) beq(inst uint32) {
 	s, t, i := parseSti(inst)
 	m.logStiBranch("beq", s, t, i)
 	if m.GetReg(s) == m.GetReg(t) {
-		m.pc += i * 4
+		m.pc += uint32(i) * 4
 	}
 }
 
@@ -114,21 +114,21 @@ func (m *Machine) bne(inst uint32) {
 	s, t, i := parseSti(inst)
 	m.logStiBranch("bne", s, t, i)
 	if m.GetReg(s) != m.GetReg(t) {
-		m.pc += i * 4
+		m.pc += uint32(i) * 4
 	}
 }
 
 func (m *Machine) jr(inst uint32) {
 	s := parseS(inst)
-	addr := uint16(m.GetReg(s))
+	addr := m.GetReg(s)
 	m.logS("jr", s, addr)
 	m.pc = addr
 }
 
 func (m *Machine) jalr(inst uint32) {
 	s := parseS(inst)
-	addr := uint16(m.GetReg(s))
+	addr := m.GetReg(s)
 	m.logS("jalr", s, addr)
-	m.SetReg(31, uint32(m.pc))
+	m.SetReg(31, m.pc)
 	m.pc = addr
 }
