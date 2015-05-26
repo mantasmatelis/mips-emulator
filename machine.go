@@ -69,6 +69,10 @@ func (m *Machine) GetHi() uint32 {
 
 func (m *Machine) LoadProgram(memory map[uint32][]uint32, registers []uint32, verbose bool, breakpoints bool) {
 	for base, mem := range memory {
+		if base % 4 != 0 {
+			panic("initial memory address for file or memory load must be word-aligned")
+		}
+		base /= 4
 		for offset, val := range mem {
 			m.mem[base + uint32(offset)] = val
 			m.memSet[base + uint32(offset)] = true

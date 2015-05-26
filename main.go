@@ -61,7 +61,10 @@ func main() {
 		strData := strings.Split(v, ",")
 		data := make([]uint32, len(strData))
 		for k, v := range strData {
-			_, err := fmt.Sscan(v, &data[k])
+			var thisData int64
+			_, err := fmt.Sscan(v, &thisData)
+			data[k] = uint32(thisData)
+			fmt.Printf("data[%v] is %v originally %v\n", k, uint32(thisData), thisData)
 			if err != nil {
 				fmt.Println("argument memory is not comma-delimited integers: ", err)
 				os.Exit(1)
